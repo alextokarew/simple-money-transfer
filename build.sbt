@@ -1,5 +1,8 @@
 lazy val akkaHttpVersion = "10.1.4"
 lazy val akkaVersion    = "2.5.15"
+lazy val scalaTestVersion = "3.0.5"
+lazy val scalaLoggingVersion = "3.9.0"
+lazy val logbackVersion = "1.2.3"
 
 lazy val root = (project in file(".")).
   settings(
@@ -11,12 +14,14 @@ lazy val root = (project in file(".")).
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http"            % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
-      "com.typesafe.akka" %% "akka-http-xml"        % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-stream"          % akkaVersion,
 
-      "com.typesafe.akka" %% "akka-http-testkit"    % akkaHttpVersion % Test,
-      "com.typesafe.akka" %% "akka-testkit"         % akkaVersion     % Test,
-      "com.typesafe.akka" %% "akka-stream-testkit"  % akkaVersion     % Test,
-      "org.scalatest"     %% "scalatest"            % "3.0.5"         % Test
+      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
+      "ch.qos.logback" % "logback-classic" % logbackVersion,
+
+      "com.typesafe.akka" %% "akka-http-testkit"    % akkaHttpVersion  % Test,
+      "com.typesafe.akka" %% "akka-testkit"         % akkaVersion      % Test,
+      "com.typesafe.akka" %% "akka-stream-testkit"  % akkaVersion      % Test,
+      "org.scalatest"     %% "scalatest"            % scalaTestVersion % Test
     )
   )

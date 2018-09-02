@@ -5,14 +5,15 @@ import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import com.github.alextokarew.moneytransfer.web.Routes
 import com.typesafe.config.{ Config, ConfigFactory }
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.io.StdIn
 import scala.util.Try
 
-object Application {
+object Application extends LazyLogging {
 
   def main(args: Array[String]): Unit = {
-    println("Starting an application")
+    logger.info("Starting an application")
 
     val config: Config = ConfigFactory.load()
 
