@@ -7,12 +7,20 @@ package com.github.alextokarew.moneytransfer.storage
   */
 trait Storage[ID, E] {
   /**
-    * Puts a new entity to the storage.
+    * Puts an entity to the storage.
     * @param id primary key of the entity to put
     * @param entity an entity to put into the storage
     * @return the entity
     */
   def put(id: ID, entity: E): E
+
+  /**
+    * Puts an entity to the storage only if the record with specified id does not exist. Otherwise returns an existing entity
+    * @param id primary key of the entity to put
+    * @param entity an entity to put into the storage
+    * @return passed entity if the record wasn't create before, or an existing entity
+    */
+  def putIfAbsent(id: ID, entity: E): E
 
   /**
     * Checks whether a record by the specified key exists in the storage.
@@ -40,9 +48,11 @@ class InMemoryStorage[ID, E] extends Storage[ID, E] {
   private val map = new java.util.concurrent.ConcurrentHashMap[ID, E]()
 
   override def put(id: ID, entity: E): E = {
-    //We intentionally use simplified update model here assuming that all required synchronization is made outside.
     map.put(id, entity)
+    entity
   }
+
+  override def putIfAbsent(id: ID, entity: E): E = map.putIfAbsent(id, entity)
 
   override def exists(id: ID): Boolean = map.contains(id)
 
