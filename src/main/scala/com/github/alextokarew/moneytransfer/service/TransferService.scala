@@ -50,3 +50,13 @@ class TransferServiceImpl(
     check(_.isDefined, s"Transfer with id $id does not exist")
   ).map(_.get)
 }
+
+object TransferServiceImpl {
+  def apply(
+    processor: Processor,
+    accountStorage: Storage[AccountId, Account],
+    tokenStorage: Storage[String, Long],
+    transferStorage: Storage[Long, Transfer],
+    clock: Clock
+  ): TransferServiceImpl = new TransferServiceImpl(processor, accountStorage, tokenStorage, transferStorage, clock)
+}

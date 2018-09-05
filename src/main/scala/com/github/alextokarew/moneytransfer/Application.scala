@@ -43,8 +43,8 @@ object Application extends LazyLogging {
       }
     }
 
-    val accountService = new AccountServiceImpl(accountStorage, balanceStorage)
-    val transferService = new TransferServiceImpl(processor, accountStorage, tokenStorage, transferStorage, clock)
+    val accountService = AccountServiceImpl(accountStorage, balanceStorage)
+    val transferService = TransferServiceImpl(processor, accountStorage, tokenStorage, transferStorage, clock)
 
     val bindingFuture = Http().bindAndHandle(Routes.all(accountService, transferService), interface, port)
 

@@ -62,3 +62,10 @@ class AccountServiceImpl(accountStorage: Storage[AccountId, Account],
     ).map(_.get)
   }
 }
+
+object AccountServiceImpl {
+  def apply(
+    accountStorage: Storage[AccountId, Account],
+    balanceStorage: Storage[AccountId, BigInt]
+  ): AccountServiceImpl = new AccountServiceImpl(accountStorage, balanceStorage)
+}
