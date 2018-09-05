@@ -33,15 +33,15 @@ sealed trait TransferStatus
 /**
   * An operation is being processed now.
   */
-case object Processing
+case object Processing extends TransferStatus
 
 /**
   * An operaion was successfully completed.
   */
-case object Succeded
+case object Succeded extends TransferStatus
 
 /**
   * An operation was failed for some reason.
   * @param errors a list of errors describing why this operation was failed.
   */
-case class Failed(errors: List[ValidationError])
+case class Failed(errors: List[ValidationError]) extends TransferStatus
