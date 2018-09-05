@@ -1,8 +1,8 @@
 package com.github.alextokarew.moneytransfer.validation
 
 object Validation {
-  type Check[T] = T => List[Error]
-  type Valid[T] = Either[List[Error], T]
+  type Check[T] = T => List[ValidationError]
+  type Valid[T] = Either[List[ValidationError], T]
 
   def validate[T](instance: T)(checks: Check[T]*): Valid[T] = {
     val errors = checks.flatMap(check => check(instance))
@@ -14,8 +14,8 @@ object Validation {
   }
 
   def check[T](predicate: T => Boolean, errorMsg: String): Check[T] =
-    predicate.andThen(checkPassed => if (checkPassed) Nil else List(Error(errorMsg)))
+    predicate.andThen(checkPassed => if (checkPassed) Nil else List(ValidationError(errorMsg)))
 
 }
 
-case class Error(error: String)
+case class ValidationError(errorMsg: String)

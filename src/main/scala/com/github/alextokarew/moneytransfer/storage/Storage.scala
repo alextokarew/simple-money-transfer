@@ -48,9 +48,9 @@ class InMemoryStorage[ID, E] extends Storage[ID, E] {
 
   private val map = new java.util.concurrent.ConcurrentHashMap[ID, E]()
 
-  override def putIfAbsent(id: ID, entity: E): E = map.putIfAbsent(id, entity)
+  override def putIfAbsent(id: ID, entity: E): E = Option(map.putIfAbsent(id, entity)).getOrElse(entity)
 
-  override def exists(id: ID): Boolean = map.contains(id)
+  override def exists(id: ID): Boolean = map.containsKey(id)
 
   override def get(id: ID): Option[E] = Option(map.get(id))
 

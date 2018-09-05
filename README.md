@@ -22,18 +22,13 @@ We use sequential queue processing algorithm for the sake of simplicity, but we 
 Working with accounts.
 
 - Create an account:
-curl -i -XPOST -H 'Content-Type: application/json' -d  http://localhost:8765/account
+curl -i -XPOST -H 'Content-Type: application/json' -d '{"id": "123-456-7890", "description": "Sample account", "initialBalance": 1000000, "maxLimit": 999999999}'  http://localhost:8765/account
 
-- retrieving an account
+- retrieve account details
 curl -i -XGET http://localhost:8765/account/123-456-7890
 
-- setting max limit for the account
-
-curl -i -XPUT http://localhost:8765/account/123-456-7890
-
-- lock/unlock the account
-
-curl -i -XPUT http://localhost:8765/account/123-456-7890
+- retrieve account balance
+curl -i -XGET http://localhost:8765/account/123-456-7890/balance
 
 
 TODO:
