@@ -42,9 +42,7 @@ class TransferServiceImpl(
 
       val createdTime = clock.millis()
       val transfer = Transfer(id, validRequest, Processing, createdTime, createdTime)
-      transferStorage.putIfAbsent(id, transfer)
-      processor.enqueue(transfer)
-      transfer
+      transferStorage.putIfAbsent(id, transfer, Some(t => processor.enqueue(t)))
     }
   }
 

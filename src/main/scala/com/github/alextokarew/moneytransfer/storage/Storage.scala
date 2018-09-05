@@ -11,9 +11,10 @@ trait Storage[ID, E] {
     * Puts a new entity to the storage. If an entity under the specified key is present returns an existing entity
     * @param id primary key of the entity to put
     * @param entity an entity to put into the storage
+    * @param onInsert optional callback that is called when a new entry is added to the storage
     * @return passed entity if the record wasn't create before, or an existing entity
     */
-  def putIfAbsent(id: ID, entity: E): E
+  def putIfAbsent(id: ID, entity: E, onInsert: Option[E => Unit] = None): E
 
   /**
     * Checks whether a record by the specified key exists in the storage.
@@ -48,7 +49,15 @@ class InMemoryStorage[ID, E] extends Storage[ID, E] {
 
   private val map = new java.util.concurrent.ConcurrentHashMap[ID, E]()
 
-  override def putIfAbsent(id: ID, entity: E): E = Option(map.putIfAbsent(id, entity)).getOrElse(entity)
+  override def putIfAbsent(id: ID, entity: E, onInsert: Option[E => Unit] = None): E = {
+    val result = map.putIfAbsent(id, entity)
+    if (result == null) {
+      onInsert.foreach(_(entity))
+      entity
+    } else {
+      result
+    }
+  }
 
   override def exists(id: ID): Boolean = map.containsKey(id)
 
@@ -58,5 +67,5 @@ class InMemoryStorage[ID, E] extends Storage[ID, E] {
 }
 
 object InMemoryStorage {
-  def apply[ID, E]: InMemoryStorage[ID, E] = new InMemoryStorage()
+  def apply[ID, E](): InMemoryStorage[ID, E] = new InMemoryStorage()
 }

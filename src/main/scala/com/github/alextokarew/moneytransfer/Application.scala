@@ -32,10 +32,10 @@ object Application extends LazyLogging {
 
     val clock = Clock.systemUTC()
 
-    val accountStorage = new InMemoryStorage[AccountId, Account]()
-    val balanceStorage = new InMemoryStorage[AccountId, BigInt]()
-    val tokenStorage = new InMemoryStorage[String, Long]()
-    val transferStorage = new InMemoryStorage[Long, Transfer]()
+    val accountStorage = InMemoryStorage[AccountId, Account]()
+    val balanceStorage = InMemoryStorage[AccountId, BigInt]()
+    val tokenStorage = InMemoryStorage[String, Long]()
+    val transferStorage = InMemoryStorage[Long, Transfer]()
 
     val processor = new Processor {
       override def enqueue(transfer: Transfer): Unit = {
