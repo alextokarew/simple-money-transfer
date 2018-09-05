@@ -36,7 +36,10 @@ class TransferServiceImpl(
       check(r => accountStorage.exists(r.to), "Destination account does not exist"),
       check(_.amount > 0, "An amount to transfer must be strictly positive")
     ).map { validRequest =>
-      val id = tokenStorage.putIfAbsent(request.token, idGenerator.incrementAndGet())
+      logger.debug("Transfer request {} was succesfully validated", validRequest)
+      val id = tokenStorage.putIfAbsent(validRequest.token, idGenerator.incrementAndGet())
+      logger.debug("Transfer id for token {} is {}", validRequest.token, id)
+
       val createdTime = clock.millis()
       val transfer = Transfer(id, validRequest, Processing, createdTime, createdTime)
       transferStorage.putIfAbsent(id, transfer)

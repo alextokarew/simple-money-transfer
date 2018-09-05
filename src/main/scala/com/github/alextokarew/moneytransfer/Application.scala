@@ -1,10 +1,13 @@
 package com.github.alextokarew.moneytransfer
 
+import java.time.Clock
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import com.github.alextokarew.moneytransfer.domain.{Account, AccountId}
-import com.github.alextokarew.moneytransfer.service.AccountServiceImpl
+import com.github.alextokarew.moneytransfer.domain.{Account, AccountId, Transfer}
+import com.github.alextokarew.moneytransfer.process.Processor
+import com.github.alextokarew.moneytransfer.service.{AccountServiceImpl, TransferServiceImpl}
 import com.github.alextokarew.moneytransfer.storage.InMemoryStorage
 import com.github.alextokarew.moneytransfer.web.Routes
 import com.typesafe.config.{Config, ConfigFactory}
@@ -27,12 +30,23 @@ object Application extends LazyLogging {
     val interface = config.getString("service.http.interface")
     val port = Try(args(0).toInt).toOption.getOrElse(config.getInt("service.http.port"))
 
+    val clock = Clock.systemUTC()
+
     val accountStorage = new InMemoryStorage[AccountId, Account]()
     val balanceStorage = new InMemoryStorage[AccountId, BigInt]()
+    val tokenStorage = new InMemoryStorage[String, Long]()
+    val transferStorage = new InMemoryStorage[Long, Transfer]()
+
+    val processor = new Processor {
+      override def enqueue(transfer: Transfer): Unit = {
+        println("This is a stub! I promise to replace it with proper implementation as soon as possible!!!")
+      }
+    }
 
     val accountService = new AccountServiceImpl(accountStorage, balanceStorage)
+    val transferService = new TransferServiceImpl(processor, accountStorage, tokenStorage, transferStorage, clock)
 
-    val bindingFuture = Http().bindAndHandle(Routes.all(accountService), interface, port)
+    val bindingFuture = Http().bindAndHandle(Routes.all(accountService, transferService), interface, port)
 
     println(s"Server is running at $interface:$port, press ENTER to stop")
     StdIn.readLine() // let it run until user presses return
