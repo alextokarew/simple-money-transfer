@@ -1,6 +1,6 @@
 package com.github.alextokarew.moneytransfer.service
 
-import com.github.alextokarew.moneytransfer.domain.{Account, AccountId}
+import com.github.alextokarew.moneytransfer.domain.{Account, AccountId, Balance}
 import com.github.alextokarew.moneytransfer.storage.Storage
 import com.github.alextokarew.moneytransfer.validation.Validation._
 
@@ -28,7 +28,7 @@ trait AccountService {
     * @param id account identifier
     * @return current account balance if account exists or error description
     */
-  def balance(id: AccountId): Valid[BigInt]
+  def balance(id: AccountId): Valid[Balance]
 }
 
 class AccountServiceImpl(accountStorage: Storage[AccountId, Account],
@@ -48,7 +48,7 @@ class AccountServiceImpl(accountStorage: Storage[AccountId, Account],
 
   override def getAccount(id: AccountId): Valid[Account] = getById(id, accountStorage)
 
-  override def balance(id: AccountId): Valid[BigInt] = getById(id, balancesStorage)
+  override def balance(id: AccountId): Valid[Balance] = getById(id, balancesStorage).map(Balance)
 
   private def getById[V](id: AccountId, storage: Storage[AccountId, V]): Valid[V] = {
     validate(storage.get(id))(

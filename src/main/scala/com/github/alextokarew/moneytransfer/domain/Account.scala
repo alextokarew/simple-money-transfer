@@ -1,7 +1,10 @@
 package com.github.alextokarew.moneytransfer.domain
 
+import java.time.temporal.TemporalAmount
+
 /**
   * An account domain entity.
+ *
   * @param id account unique identifier
   * @param description account description
   * @param maxLimit optional maximum balance limit, may be set for some legal purposes
@@ -15,3 +18,9 @@ case class Account(id: AccountId, description: String, maxLimit: Option[BigInt])
   *              parts.
   */
 case class AccountId(value: String)
+
+/**
+  * Value object that represents account balance.
+  * @param amount current amount of the accout balance, must be non-negative
+  */
+case class Balance(amount: BigInt)
