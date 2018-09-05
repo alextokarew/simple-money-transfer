@@ -31,13 +31,13 @@ trait AccountService {
   def balance(id: AccountId): Valid[BigInt]
 }
 
-class AccountServiceImpl(accountStorage: Storage[AccountId, Account], balancesStorage: Storage[AccountId, BigInt]) extends AccountService {
-
+class AccountServiceImpl(accountStorage: Storage[AccountId, Account],
+                         balancesStorage: Storage[AccountId, BigInt]) extends AccountService {
 
   override def createAccount(id: AccountId, description: String, initialBalance: BigInt, maxLimit: Option[BigInt]): Valid[Account] = {
     val account = Account(id, description, maxLimit)
     validate(account)(
-      check(a => !accountStorage.exists(a.id), "Account with specified id already exists"),
+      check(a => !accountStorage.exists(a.id), s"Account with id $id already exists"),
       check(_ => initialBalance >= 0, "Initial account balance must be positive"),
       check(a => a.maxLimit.fold(true)(_ >= initialBalance), "Maximum balance limit must be no less than initial balance")
     ).map { a =>
@@ -46,19 +46,13 @@ class AccountServiceImpl(accountStorage: Storage[AccountId, Account], balancesSt
     }
   }
 
-  /**
-    * Retrieves account information by id
-    *
-    * @param id account identifier
-    * @return an existing account or error description
-    */
-  override def getAccount(id: AccountId): Valid[Account] = ???
+  override def getAccount(id: AccountId): Valid[Account] = getById(id, accountStorage)
 
-  /**
-    * Retrieves balance for specified account
-    *
-    * @param id account identifier
-    * @return current account balance if account exists or error description
-    */
-  override def balance(id: AccountId): Valid[BigInt] = ???
+  override def balance(id: AccountId): Valid[BigInt] = getById(id, balancesStorage)
+
+  private def getById[V](id: AccountId, storage: Storage[AccountId, V]): Valid[V] = {
+    validate(storage.get(id))(
+      check(_.isDefined, s"Account with id $id does not exist")
+    ).map(_.get)
+  }
 }
