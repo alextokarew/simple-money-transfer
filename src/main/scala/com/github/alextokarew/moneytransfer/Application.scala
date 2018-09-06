@@ -37,11 +37,13 @@ object Application extends LazyLogging {
     val tokenStorage = InMemoryStorage[String, Long]()
     val transferStorage = InMemoryStorage[Long, Transfer]()
 
-    val processor = new Processor {
-      override def enqueue(transfer: Transfer): Unit = {
-        println("This is a stub! I promise to replace it with proper implementation as soon as possible!!!")
-      }
-    }
+    val processor = Processor(
+      Runtime.getRuntime.availableProcessors(),
+      accountStorage,
+      balanceStorage,
+      transferStorage,
+      clock
+    )
 
     val accountService = AccountServiceImpl(accountStorage, balanceStorage)
     val transferService = TransferServiceImpl(processor, accountStorage, tokenStorage, transferStorage, clock)
@@ -50,6 +52,8 @@ object Application extends LazyLogging {
 
     println(s"Server is running at $interface:$port, press ENTER to stop")
     StdIn.readLine() // let it run until user presses return
+
+    logger.info("Application shutdown process has been started")
     bindingFuture
       .flatMap(_.unbind()) // trigger unbinding from the port
       .onComplete(_ => system.terminate())
