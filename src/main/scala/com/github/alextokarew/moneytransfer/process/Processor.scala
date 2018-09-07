@@ -1,7 +1,7 @@
 package com.github.alextokarew.moneytransfer.process
 
 import java.time.Clock
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue}
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLongArray, AtomicReferenceArray}
 
 import akka.stream.Materializer
@@ -12,8 +12,10 @@ import com.github.alextokarew.moneytransfer.validation.Validation._
 import com.typesafe.scalalogging.LazyLogging
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
 
+
 /**
-  * Money transfer operation processor.
+  * Money transfer operation processor. It must ensure that for any account there are no concurrent transfers that are
+  * being processed at the same time.
   */
 trait Processor {
   /**
@@ -27,14 +29,14 @@ object Processor {
 
   /**
     * Creates a processor that is implemented using master-worker pattern and reactive-streams principle.
-    * This class is the main entry point and it serves as master. It acts as publisher of incoming transfers which are
-    * pulled by workers.
     *
     * @see  <a href="http://www.reactive-streams.org/">reactive-streams</a> specification
     * @param numWorkers the total number of workers
+    * @param accountStorage account details storage
     * @param balanceStorage account balances storage
     * @param transferStorage transfer operations storage
-    * @return
+    * @param clock clock that is used to calculate updated time
+    * @return an implementation of [[Processor]] trait
     */
   def apply(
     numWorkers: Int,
@@ -57,25 +59,39 @@ object Processor {
   */
 private class ProcessorImplMaster(numWorkers: Int) extends Processor with Publisher[Transfer] with LazyLogging {
 
+  val waitingBuffer = new LinkedBlockingQueue[Transfer]()
+
   private val registeredWorkersCount = new AtomicInteger(0)
 
   //here we use atomic arrays instead of maps because we assume that workers are indexed by integers
   private val workers = new AtomicReferenceArray[Subscriber[_ >: Transfer]](numWorkers)
-  private val workerRequests = new AtomicLongArray(numWorkers)
+  private val workersDemand = new AtomicLongArray(numWorkers)
 
-  //Assotiating an account with a certain worker so that all operations on this account will happen sequentially
-  //AccountId -> (WorkerId, count)
-  private val accountIdToWorker = new ConcurrentHashMap[AccountId, AccountToWorker]()
+  //Here we associate an account with a certain worker so that all operations on this account will happen sequentially
+  //We assume that the number of accounts is much greater than the number of workers, so we can push a transfer to
+  //a certain worker and let the subsequent transfers for the same accounts wait until the current transfer is completed
+  private val accountIdToWorker = new ConcurrentHashMap[AccountId, Integer]()
 
   override def enqueue(transfer: Transfer): Unit = findWorker(transfer) match {
     case Some(workerId) => push(workerId, transfer)
-    case None => //push to the buffer
+    case None =>
+      logger.debug("Transfer {} was put to the waiting buffer ")
+      waitingBuffer.put(transfer)
   }
 
   def onComplete(transfer: Transfer): Unit = {
-    //Decrement transfers count for the from and to sides
-    //Try to push some transfers that are waiting in the buffer
-    ???
+    val workerId = accountIdToWorker.remove(transfer.request.from)
+    accountIdToWorker.remove(transfer.request.to)
+
+    def iterate(demand: Long): Unit = {
+      val t: Transfer = waitingBuffer.poll()
+      if (demand > 0 && t != null) {
+        enqueue(t)
+        iterate(demand - 1)
+      }
+    }
+
+    iterate(workersDemand.get(workerId))
   }
 
   /**
@@ -83,41 +99,44 @@ private class ProcessorImplMaster(numWorkers: Int) extends Processor with Publis
     * @return Some(workerId) if the worker was found or None if there is no worker that can handle this transfer
     */
   private def findWorker(transfer: Transfer): Option[Int] = {
-    val fromWorkerOpt = Option(accountIdToWorker.get(transfer.request.from))
-    val toWorkerOpt = Option(accountIdToWorker.get(transfer.request.to))
-
-    val workerIdOpt = (fromWorkerOpt, toWorkerOpt) match {
-      //IF from and to associated with one worker AND this worker requests > 0 then return it
-      case (Some(w1), Some(w2)) if w1.workerId == w2.workerId => Some(w1.workerId)
-
-      //ELSE IF one of the sides is associated and the other is not, and this worker requests > 0 - return it
-      case (Some(w), None) => Some(w.workerId)
-      case (None, Some(w)) => Some(w.workerId)
-
-      //ELSE IF no worker is associated with any of the sides return worker with maximum requests number
-      case (None, None) => findWorkerWithMaxDemand()
-
-      case _ => None
+    if (accountIdToWorker.get(transfer.request.from) != null || accountIdToWorker.get(transfer.request.to) != null) {
+      return None
     }
 
-    val result = workerIdOpt.filter(workerId => workerRequests.get(workerId) > 0)
+    val workerIdOpt = findWorkerWithMaxDemand()
 
-    //IF worker is assigned then bound both sides to the worker
-    workerIdOpt.foreach { workerId =>
-      accountIdToWorker.putAll()
+    if (workerIdOpt.isEmpty) {
+      return None
     }
 
-    workerIdOpt
+    val workerId = workerIdOpt.get
 
-    ???
+    if (accountIdToWorker.putIfAbsent(transfer.request.from, workerId) == null) {
+      if (accountIdToWorker.putIfAbsent(transfer.request.to, workerId) == null) {
+        return Some(workerId)
+      } else {
+        accountIdToWorker.remove(transfer.request.from, workerId)
+      }
+    }
+
+    findWorker(transfer)
+
   }
 
-  private def findWorkerWithMaxDemand(): Option[Int] = ???
+  private def findWorkerWithMaxDemand(): Option[Int] = {
+    val (workerId, demand) = (1 until workersDemand.length()).foldLeft((0, workersDemand.get(0))) {
+      case ((maxIndex, maxValue), index) =>
+        val value = workersDemand.get(index)
+        if (value > maxValue) index -> value else maxIndex -> maxValue
+    }
+
+    if (demand > 0) Some(workerId) else None
+  }
 
   private def push(workerId: Int, transfer: Transfer): Unit = {
     logger.debug("Transfer {} is being pushed to worker {}", transfer.id, workerId)
     workers.get(workerId).onNext(transfer)
-    workerRequests.decrementAndGet(workerId)
+    workersDemand.decrementAndGet(workerId)
   }
 
   override def subscribe(worker: Subscriber[_ >: Transfer]): Unit = {
@@ -130,7 +149,7 @@ private class ProcessorImplMaster(numWorkers: Int) extends Processor with Publis
   private def createSubscription(workerId: Int): Subscription = new Subscription {
     override def request(n: Long): Unit = {
       logger.debug("A worker {} has requested {} transfers to process", workerId, n)
-      workerRequests.addAndGet(workerId, n)
+      workersDemand.addAndGet(workerId, n)
     }
 
     override def cancel(): Unit = {
@@ -139,8 +158,6 @@ private class ProcessorImplMaster(numWorkers: Int) extends Processor with Publis
     }
   }
 }
-
-private case class AccountToWorker(workerId: Int, count: Int)
 
 private class ProcessorImplWorkerFactory(
   accountStorage: Storage[AccountId, Account],
@@ -171,7 +188,7 @@ private class ProcessorImplWorkerFactory(
             balanceStorage.update(t.request.from, _ - t.request.amount)
             balanceStorage.update(t.request.to, _ + t.request.amount)
             transferStorage.update(t.id, _.copy(status = Succeded, updated = clock.millis()))
-            logger.debug("Transfer {} was completed succesfully")
+            logger.debug("Transfer {} was completed succesfully", t.id)
 
           case Left(errors) =>
             transferStorage.update(transfer.id, _.copy(status = Failed(errors), updated = clock.millis()))
