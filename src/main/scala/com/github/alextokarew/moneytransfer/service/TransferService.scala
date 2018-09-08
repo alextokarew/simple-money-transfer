@@ -34,6 +34,7 @@ class TransferServiceImpl(
     validate(request)(
       check(r => accountStorage.exists(r.from), "Source account does not exist"),
       check(r => accountStorage.exists(r.to), "Destination account does not exist"),
+      check(r => r.from != r.to, "Source and destination accounts must be different"),
       check(_.amount > 0, "An amount to transfer must be strictly positive")
     ).map { validRequest =>
       logger.debug("Transfer request {} was succesfully validated", validRequest)
