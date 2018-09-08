@@ -75,19 +75,24 @@ private class ProcessorImplMaster(numWorkers: Int) extends Processor with Publis
   override def enqueue(transfer: Transfer): Unit = findWorker(transfer) match {
     case Some(workerId) => push(workerId, transfer)
     case None =>
-      logger.debug("Transfer {} was put to the waiting buffer ")
+      logger.debug("Transfer {} has been put to the waiting buffer", transfer.id)
       waitingBuffer.put(transfer)
   }
 
   def onComplete(transfer: Transfer): Unit = {
     val workerId = accountIdToWorker.remove(transfer.request.from)
     accountIdToWorker.remove(transfer.request.to)
+    drainWaitingBuffer(workerId)
+  }
 
+  private def drainWaitingBuffer(workerId: Int): Unit = {
     def iterate(demand: Long): Unit = {
-      val t: Transfer = waitingBuffer.poll()
-      if (demand > 0 && t != null) {
-        enqueue(t)
-        iterate(demand - 1)
+      if (demand > 0) {
+        val t: Transfer = waitingBuffer.poll()
+        if (t != null) {
+          enqueue(t)
+          iterate(demand - 1)
+        }
       }
     }
 
@@ -134,7 +139,7 @@ private class ProcessorImplMaster(numWorkers: Int) extends Processor with Publis
   }
 
   private def push(workerId: Int, transfer: Transfer): Unit = {
-    logger.debug("Transfer {} is being pushed to worker {}", transfer.id, workerId)
+    logger.debug("Transfer {} has been pushed to worker {}", transfer.id, workerId)
     workers.get(workerId).onNext(transfer)
     workersDemand.decrementAndGet(workerId)
   }
@@ -150,6 +155,7 @@ private class ProcessorImplMaster(numWorkers: Int) extends Processor with Publis
     override def request(n: Long): Unit = {
       logger.debug("A worker {} has requested {} transfers to process", workerId, n)
       workersDemand.addAndGet(workerId, n)
+//      drainWaitingBuffer(workerId)
     }
 
     override def cancel(): Unit = {

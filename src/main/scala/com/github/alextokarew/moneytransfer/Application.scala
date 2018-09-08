@@ -23,7 +23,7 @@ object Application extends LazyLogging {
 
     val config: Config = ConfigFactory.load()
 
-    implicit val system: ActorSystem = ActorSystem("helloAkkaHttpServer")
+    implicit val system: ActorSystem = ActorSystem("simpleMoneyTransfer")
     implicit val materializer: ActorMaterializer = ActorMaterializer()
     import system.dispatcher
 
