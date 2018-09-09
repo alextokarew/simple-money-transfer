@@ -155,7 +155,7 @@ private class ProcessorImplMaster(numWorkers: Int) extends Processor with Publis
     override def request(n: Long): Unit = {
       logger.debug("A worker {} has requested {} transfers to process", workerId, n)
       workersDemand.addAndGet(workerId, n)
-//      drainWaitingBuffer(workerId)
+      drainWaitingBuffer(workerId)
     }
 
     override def cancel(): Unit = {
