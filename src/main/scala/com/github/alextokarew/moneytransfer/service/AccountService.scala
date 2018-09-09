@@ -32,15 +32,16 @@ trait AccountService {
   def balance(id: AccountId): Valid[Balance]
 }
 
-class AccountServiceImpl(accountStorage: Storage[AccountId, Account],
-                         balanceStorage: Storage[AccountId, BigInt]) extends AccountService with LazyLogging {
+class AccountServiceImpl(
+  accountStorage: Storage[AccountId, Account],
+  balanceStorage: Storage[AccountId, BigInt]) extends AccountService with LazyLogging {
 
   override def createAccount(id: AccountId, description: String, initialBalance: BigInt, maxLimit: Option[BigInt]): Valid[Account] = {
     logger.debug("Trying to create an account with id {}", id.value)
 
     val account = Account(id, description, maxLimit)
     validate(account)(
-      check(a => !accountStorage.exists(a.id), s"Account with id $id already exists"),
+      check(a => !accountStorage.exists(a.id), s"Account with id ${id.value} already exists"),
       check(_ => initialBalance >= 0, "Initial account balance must be non-negative"),
       check(a => a.maxLimit.fold(true)(_ >= initialBalance), "Maximum balance limit must be no less than initial balance")
     ).map { a =>
@@ -58,7 +59,7 @@ class AccountServiceImpl(accountStorage: Storage[AccountId, Account],
 
   private def getById[V](id: AccountId, storage: Storage[AccountId, V]): Valid[V] = {
     validate(storage.get(id))(
-      check(_.isDefined, s"Account with id $id does not exist")
+      check(_.isDefined, s"Account with id ${id.value} does not exist")
     ).map(_.get)
   }
 }
