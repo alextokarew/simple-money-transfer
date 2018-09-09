@@ -25,9 +25,10 @@ class TransferServiceImpl(
   accountStorage: Storage[AccountId, Account],
   tokenStorage: Storage[String, Long],
   transferStorage: Storage[Long, Transfer],
-  clock: Clock) extends TransferService with LazyLogging {
+  clock: Clock,
+  lastId: Long) extends TransferService with LazyLogging {
 
-  private val idGenerator = new AtomicLong(0)
+  private val idGenerator = new AtomicLong(lastId)
 
   override def createTransfer(request: TransferRequest): Valid[Transfer] = {
     logger.debug("Trying to create new money transfer operation according to request {}", request)
@@ -58,6 +59,7 @@ object TransferServiceImpl {
     accountStorage: Storage[AccountId, Account],
     tokenStorage: Storage[String, Long],
     transferStorage: Storage[Long, Transfer],
-    clock: Clock
-  ): TransferServiceImpl = new TransferServiceImpl(processor, accountStorage, tokenStorage, transferStorage, clock)
+    clock: Clock,
+    lastId: Long = 0L
+  ): TransferServiceImpl = new TransferServiceImpl(processor, accountStorage, tokenStorage, transferStorage, clock, lastId)
 }

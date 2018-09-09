@@ -3,6 +3,7 @@ lazy val akkaVersion    = "2.5.15"
 lazy val scalaTestVersion = "3.0.5"
 lazy val scalaLoggingVersion = "3.9.0"
 lazy val logbackVersion = "1.2.3"
+lazy val mockitoVersion = "2.21.0"
 
 lazy val root = (project in file(".")).
   settings(
@@ -22,6 +23,7 @@ lazy val root = (project in file(".")).
       "com.typesafe.akka" %% "akka-http-testkit"    % akkaHttpVersion  % Test,
       "com.typesafe.akka" %% "akka-testkit"         % akkaVersion      % Test,
       "com.typesafe.akka" %% "akka-stream-testkit"  % akkaVersion      % Test,
-      "org.scalatest"     %% "scalatest"            % scalaTestVersion % Test
+      "org.scalatest"     %% "scalatest"            % scalaTestVersion % Test,
+      "org.mockito" % "mockito-core" % mockitoVersion % Test
     )
   )
