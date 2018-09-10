@@ -5,12 +5,12 @@ import java.time.Clock
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import com.github.alextokarew.moneytransfer.domain.{Account, AccountId, Transfer}
+import com.github.alextokarew.moneytransfer.domain.{ Account, AccountId, Transfer }
 import com.github.alextokarew.moneytransfer.process.Processor
-import com.github.alextokarew.moneytransfer.service.{AccountServiceImpl, TransferServiceImpl}
+import com.github.alextokarew.moneytransfer.service.{ AccountServiceImpl, TransferServiceImpl }
 import com.github.alextokarew.moneytransfer.storage.InMemoryStorage
 import com.github.alextokarew.moneytransfer.web.Routes
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{ Config, ConfigFactory }
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.io.StdIn
@@ -42,8 +42,7 @@ object Application extends LazyLogging {
       accountStorage,
       balanceStorage,
       transferStorage,
-      clock
-    )
+      clock)
 
     val accountService = AccountServiceImpl(accountStorage, balanceStorage)
     val transferService = TransferServiceImpl(processor, accountStorage, tokenStorage, transferStorage, clock)

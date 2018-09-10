@@ -1,13 +1,13 @@
 package com.github.alextokarew.moneytransfer.web
 
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
+import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, StatusCodes }
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import com.github.alextokarew.moneytransfer.domain._
-import com.github.alextokarew.moneytransfer.service.{AccountService, TransferService}
+import com.github.alextokarew.moneytransfer.service.{ AccountService, TransferService }
 import com.github.alextokarew.moneytransfer.validation.ValidationError
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 
 class RoutesSpec extends WordSpec with Matchers with MockitoSugar with ScalatestRouteTest {
 
@@ -48,7 +48,6 @@ class RoutesSpec extends WordSpec with Matchers with MockitoSugar with Scalatest
       when(accountService.getAccount(AccountId("123-456-7890")))
         .thenReturn(Right(Account(AccountId("123-456-7890"), "Account", None)))
 
-
       Get("/account/123-456-7890") ~> routes ~> check {
         status shouldBe StatusCodes.OK
         contentType shouldBe ContentTypes.`application/json`
@@ -81,7 +80,7 @@ class RoutesSpec extends WordSpec with Matchers with MockitoSugar with Scalatest
   "Transfer routes" should {
     "Create a successful account transfer" in {
       val body = """{"from":"123-456-7890","to":"987-654-3210","amount":50000,"comment":"bribe","token":"token-1"}"""
-      val request = TransferRequest(AccountId("123-456-7890"), AccountId("987-654-3210"),50000,Some("bribe"),"token-1")
+      val request = TransferRequest(AccountId("123-456-7890"), AccountId("987-654-3210"), 50000, Some("bribe"), "token-1")
       when(transferService.createTransfer(request)).thenReturn(Right(Transfer(3L, request, Processing, 12345L, 12345L)))
 
       Post("/transfer", HttpEntity(ContentTypes.`application/json`, body)) ~> routes ~> check {
@@ -93,7 +92,7 @@ class RoutesSpec extends WordSpec with Matchers with MockitoSugar with Scalatest
 
     "Return an error message if the transfer can't be created" in {
       val body = """{"from":"bad-account","to":"987-654-3210","amount":50000,"token":"token-2"}"""
-      val request = TransferRequest(AccountId("bad-account"), AccountId("987-654-3210"),50000,None,"token-2")
+      val request = TransferRequest(AccountId("bad-account"), AccountId("987-654-3210"), 50000, None, "token-2")
       when(transferService.createTransfer(request)).thenReturn(Left(List(ValidationError("Source account does not exist"))))
 
       Post("/transfer", HttpEntity(ContentTypes.`application/json`, body)) ~> routes ~> check {
@@ -104,7 +103,7 @@ class RoutesSpec extends WordSpec with Matchers with MockitoSugar with Scalatest
     }
 
     "Retrieve an existing transfer by id" in {
-      val request = TransferRequest(AccountId("123-456-7890"), AccountId("987-654-3210"),50000,Some("bribe"),"token-1")
+      val request = TransferRequest(AccountId("123-456-7890"), AccountId("987-654-3210"), 50000, Some("bribe"), "token-1")
       when(transferService.getTransfer(3L)).thenReturn(Right(Transfer(3L, request, Succeded, 12345L, 12345L)))
 
       Get("/transfer/3") ~> routes ~> check {

@@ -1,14 +1,14 @@
 package com.github.alextokarew.moneytransfer.process
 
-import java.time.{Clock, Instant, ZoneId}
+import java.time.{ Clock, Instant, ZoneId }
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.testkit.{TestKit, TestProbe}
+import akka.testkit.{ TestKit, TestProbe }
 import com.github.alextokarew.moneytransfer.domain._
 import com.github.alextokarew.moneytransfer.storage.InMemoryStorage
 import com.github.alextokarew.moneytransfer.validation.ValidationError
-import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec, WordSpecLike}
+import org.scalatest.{ BeforeAndAfterEach, Matchers, WordSpec, WordSpecLike }
 
 import scala.concurrent.duration._
 
@@ -72,7 +72,6 @@ class ProcessorSpec extends TestKit(ActorSystem("ProcessorSpec")) with WordSpecL
       result shouldEqual Some(Transfer(3L, transferRequestPrototype, Succeded, created, updated))
     }
 
-
     "Fail transfer" when {
       "source account dosen't have enough amount" in {
         balanceStorage.update(sourceAccountId, _ => 2000)
@@ -86,8 +85,7 @@ class ProcessorSpec extends TestKit(ActorSystem("ProcessorSpec")) with WordSpecL
           transferRequestPrototype.copy(amount = 3000),
           Failed(List(ValidationError("Insufficient funds on source account"))),
           created,
-          updated
-        ))
+          updated))
       }
 
       "destination account's max limit will be exceeded" in {
@@ -101,8 +99,7 @@ class ProcessorSpec extends TestKit(ActorSystem("ProcessorSpec")) with WordSpecL
           transferRequestPrototype.copy(amount = 7000),
           Failed(List(ValidationError("Transfer is not possible because it will exceed maximum limit on target account"))),
           created,
-          updated
-        ))
+          updated))
       }
     }
   }

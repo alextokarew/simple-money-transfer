@@ -1,8 +1,8 @@
 package com.github.alextokarew.moneytransfer.process
 
 import java.time.Clock
-import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue}
-import java.util.concurrent.atomic.{AtomicInteger, AtomicLongArray, AtomicReferenceArray}
+import java.util.concurrent.{ ConcurrentHashMap, LinkedBlockingQueue }
+import java.util.concurrent.atomic.{ AtomicInteger, AtomicLongArray, AtomicReferenceArray }
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
@@ -10,34 +10,33 @@ import com.github.alextokarew.moneytransfer.domain._
 import com.github.alextokarew.moneytransfer.storage.Storage
 import com.github.alextokarew.moneytransfer.validation.Validation._
 import com.typesafe.scalalogging.LazyLogging
-import org.reactivestreams.{Publisher, Subscriber, Subscription}
-
+import org.reactivestreams.{ Publisher, Subscriber, Subscription }
 
 /**
-  * Money transfer operation processor. It must ensure that for any account there are no concurrent transfers that are
-  * being processed at the same time.
-  */
+ * Money transfer operation processor. It must ensure that for any account there are no concurrent transfers that are
+ * being processed at the same time.
+ */
 trait Processor {
   /**
-    * Enqueues a transfer operation to process.
-    * @param transfer a transfer to process
-    */
+   * Enqueues a transfer operation to process.
+   * @param transfer a transfer to process
+   */
   def enqueue(transfer: Transfer)
 }
 
 object Processor {
 
   /**
-    * Creates a processor that is implemented using master-worker pattern and reactive-streams principle.
-    *
-    * @see  <a href="http://www.reactive-streams.org/">reactive-streams</a> specification
-    * @param numWorkers the total number of workers
-    * @param accountStorage account details storage
-    * @param balanceStorage account balances storage
-    * @param transferStorage transfer operations storage
-    * @param clock clock that is used to calculate updated time
-    * @return an implementation of [[Processor]] trait
-    */
+   * Creates a processor that is implemented using master-worker pattern and reactive-streams principle.
+   *
+   * @see  <a href="http://www.reactive-streams.org/">reactive-streams</a> specification
+   * @param numWorkers the total number of workers
+   * @param accountStorage account details storage
+   * @param balanceStorage account balances storage
+   * @param transferStorage transfer operations storage
+   * @param clock clock that is used to calculate updated time
+   * @return an implementation of [[Processor]] trait
+   */
   def apply(
     numWorkers: Int,
     accountStorage: Storage[AccountId, Account],
@@ -53,10 +52,10 @@ object Processor {
 }
 
 /**
-  * This class is the main entry point and it serves as master. It acts as a publisher of incoming transfers which are
-  * pulled by workers.
-  * @param numWorkers the total number of workers
-  */
+ * This class is the main entry point and it serves as master. It acts as a publisher of incoming transfers which are
+ * pulled by workers.
+ * @param numWorkers the total number of workers
+ */
 private class ProcessorImplMaster(numWorkers: Int) extends Processor with Publisher[Transfer] with LazyLogging {
 
   val waitingBuffer = new LinkedBlockingQueue[Transfer]()
@@ -100,9 +99,9 @@ private class ProcessorImplMaster(numWorkers: Int) extends Processor with Publis
   }
 
   /**
-    * Finds an appropriate worker by source and destination account id
-    * @return Some(workerId) if the worker was found or None if there is no worker that can handle this transfer
-    */
+   * Finds an appropriate worker by source and destination account id
+   * @return Some(workerId) if the worker was found or None if there is no worker that can handle this transfer
+   */
   private def findWorker(transfer: Transfer): Option[Int] = {
     if (accountIdToWorker.get(transfer.request.from) != null || accountIdToWorker.get(transfer.request.to) != null) {
       return None
@@ -188,18 +187,17 @@ private class ProcessorImplWorkerFactory(
         logger.debug("Starting to process transfer {}", transfer.id)
         validate(transfer)(
           check(fromAccountPredicate, "Insufficient funds on source account"),
-          check(toAccountPredicate, "Transfer is not possible because it will exceed maximum limit on target account")
-        ) match {
-          case Right(t) =>
-            balanceStorage.update(t.request.from, _ - t.request.amount)
-            balanceStorage.update(t.request.to, _ + t.request.amount)
-            transferStorage.update(t.id, _.copy(status = Succeded, updated = clock.millis()))
-            logger.debug("Transfer {} was completed succesfully", t.id)
+          check(toAccountPredicate, "Transfer is not possible because it will exceed maximum limit on target account")) match {
+            case Right(t) =>
+              balanceStorage.update(t.request.from, _ - t.request.amount)
+              balanceStorage.update(t.request.to, _ + t.request.amount)
+              transferStorage.update(t.id, _.copy(status = Succeded, updated = clock.millis()))
+              logger.debug("Transfer {} was completed succesfully", t.id)
 
-          case Left(errors) =>
-            transferStorage.update(transfer.id, _.copy(status = Failed(errors), updated = clock.millis()))
-            logger.debug("Transfer {} was failed with following errors: {}", transfer.id, errors)
-        }
+            case Left(errors) =>
+              transferStorage.update(transfer.id, _.copy(status = Failed(errors), updated = clock.millis()))
+              logger.debug("Transfer {} was failed with following errors: {}", transfer.id, errors)
+          }
 
         val updatedTransfer = transferStorage.get(transfer.id).get
         master.onComplete(updatedTransfer)

@@ -1,16 +1,16 @@
 package com.github.alextokarew.moneytransfer.service
 
-import java.time.{Clock, Instant, ZoneId}
+import java.time.{ Clock, Instant, ZoneId }
 
 import com.github.alextokarew.moneytransfer.domain._
 import com.github.alextokarew.moneytransfer.process.Processor
-import com.github.alextokarew.moneytransfer.storage.{InMemoryStorage, Storage}
+import com.github.alextokarew.moneytransfer.storage.{ InMemoryStorage, Storage }
 import com.github.alextokarew.moneytransfer.validation.ValidationError
 import org.mockito.Mockito
 import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers._
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
+import org.scalatest.{ BeforeAndAfterEach, Matchers, WordSpec }
 
 class TransferServiceSpec extends WordSpec with Matchers with BeforeAndAfterEach with MockitoSugar {
 
@@ -27,8 +27,7 @@ class TransferServiceSpec extends WordSpec with Matchers with BeforeAndAfterEach
     TransferRequest(accountId1, accountId2, 1000, Some("Sample transfer"), existingTransferToken),
     Succeded,
     System.currentTimeMillis(),
-    System.currentTimeMillis()
-  )
+    System.currentTimeMillis())
 
   private val now = System.currentTimeMillis()
   private val clock = Clock.fixed(Instant.ofEpochMilli(now), ZoneId.of("UTC"))
@@ -55,7 +54,6 @@ class TransferServiceSpec extends WordSpec with Matchers with BeforeAndAfterEach
 
     service = TransferServiceImpl(processor, accountStorage, tokenStorage, transferStorage, clock, existingTransferId)
   }
-
 
   "TransferService#createTransfer" should {
     "create a transfer according to specified transfer request and send it to a processor" in {
@@ -106,7 +104,6 @@ class TransferServiceSpec extends WordSpec with Matchers with BeforeAndAfterEach
     }
   }
 
-
   "TransferService#getTransfer" should {
     "retrieve an existing transfer by id" in {
       val result = service.getTransfer(existingTransferId)
@@ -120,6 +117,5 @@ class TransferServiceSpec extends WordSpec with Matchers with BeforeAndAfterEach
       result shouldEqual Left(List(ValidationError(s"Transfer with id 999 does not exist")))
     }
   }
-
 
 }

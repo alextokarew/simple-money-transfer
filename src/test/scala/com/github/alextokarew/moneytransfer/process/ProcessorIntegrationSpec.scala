@@ -6,10 +6,10 @@ import java.util.concurrent.CountDownLatch
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.scaladsl.{ Sink, Source }
 import com.github.alextokarew.moneytransfer.domain._
-import com.github.alextokarew.moneytransfer.storage.{InMemoryStorage, Storage}
-import org.scalatest.{Matchers, WordSpec}
+import com.github.alextokarew.moneytransfer.storage.{ InMemoryStorage, Storage }
+import org.scalatest.{ Matchers, WordSpec }
 
 import scala.concurrent.Future
 
@@ -77,8 +77,7 @@ class ProcessorIntegrationSpec extends WordSpec with Matchers {
         accountStorage,
         balanceStorage,
         transferStorage,
-        clock
-      )
+        clock)
 
       val random = new Random()
 

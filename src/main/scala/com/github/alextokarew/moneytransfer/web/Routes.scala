@@ -1,10 +1,10 @@
 package com.github.alextokarew.moneytransfer.web
 
-import akka.http.scaladsl.model.{StatusCode, StatusCodes}
+import akka.http.scaladsl.model.{ StatusCode, StatusCodes }
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import com.github.alextokarew.moneytransfer.domain.{AccountId, TransferRequest}
-import com.github.alextokarew.moneytransfer.service.{AccountService, TransferService}
+import com.github.alextokarew.moneytransfer.domain.{ AccountId, TransferRequest }
+import com.github.alextokarew.moneytransfer.service.{ AccountService, TransferService }
 import com.github.alextokarew.moneytransfer.validation.Validation.Valid
 import com.github.alextokarew.moneytransfer.web.request.CreateAccountRequest
 import spray.json.RootJsonFormat
@@ -35,8 +35,7 @@ object Routes extends JsonSupport {
                   service.balance(accountId)
                 }
               }
-            }
-          )
+            })
         }
       },
       post {
@@ -72,7 +71,6 @@ object Routes extends JsonSupport {
 
   def all(accountService: AccountService, transferService: TransferService): Route = concat(
     account(accountService),
-    transfer(transferService)
-  )
+    transfer(transferService))
 
 }

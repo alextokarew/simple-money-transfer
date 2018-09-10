@@ -4,7 +4,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.github.alextokarew.moneytransfer.domain._
 import com.github.alextokarew.moneytransfer.validation.ValidationError
 import com.github.alextokarew.moneytransfer.web.request.CreateAccountRequest
-import spray.json.{DefaultJsonProtocol, JsString, JsValue, JsonFormat, RootJsonFormat, deserializationError}
+import spray.json.{ DefaultJsonProtocol, JsString, JsValue, JsonFormat, RootJsonFormat, deserializationError }
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val validationErrorFormat: RootJsonFormat[ValidationError] = jsonFormat1(ValidationError)

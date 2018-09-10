@@ -1,9 +1,9 @@
 package com.github.alextokarew.moneytransfer.service
 
-import com.github.alextokarew.moneytransfer.domain.{Account, AccountId, Balance}
-import com.github.alextokarew.moneytransfer.storage.{InMemoryStorage, Storage}
+import com.github.alextokarew.moneytransfer.domain.{ Account, AccountId, Balance }
+import com.github.alextokarew.moneytransfer.storage.{ InMemoryStorage, Storage }
 import com.github.alextokarew.moneytransfer.validation.ValidationError
-import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
+import org.scalatest.{ BeforeAndAfterEach, Matchers, WordSpec }
 
 class AccountServiceSpec extends WordSpec with Matchers with BeforeAndAfterEach {
 
@@ -15,7 +15,6 @@ class AccountServiceSpec extends WordSpec with Matchers with BeforeAndAfterEach 
   var accountStorage: Storage[AccountId, Account] = _
   var balanceStorage: Storage[AccountId, BigInt] = _
   var service: AccountService = _
-
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
