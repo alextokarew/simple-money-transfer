@@ -6,12 +6,10 @@ import java.util.concurrent.CountDownLatch
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.{ Sink, Source }
+import akka.stream.scaladsl.Source
 import com.github.alextokarew.moneytransfer.domain._
-import com.github.alextokarew.moneytransfer.storage.{ InMemoryStorage, Storage }
-import org.scalatest.{ Matchers, WordSpec }
-
-import scala.concurrent.Future
+import com.github.alextokarew.moneytransfer.storage.InMemoryStorage
+import org.scalatest.{Matchers, WordSpec}
 
 class ProcessorIntegrationSpec extends WordSpec with Matchers {
 
@@ -70,7 +68,6 @@ class ProcessorIntegrationSpec extends WordSpec with Matchers {
     "Process a lot of concurrent operations and keep all invariants" in {
       implicit val system: ActorSystem = ActorSystem("simpleMoneyTransferIT")
       implicit val materializer: ActorMaterializer = ActorMaterializer()
-      import system.dispatcher
 
       val processor = Processor(
         Runtime.getRuntime.availableProcessors(),
